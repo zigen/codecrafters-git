@@ -21,7 +21,7 @@ impl GitObject {
     pub fn pretty_print(&self) {
         match self {
             GitObject::Blob(s) => println!("{}", s),
-            GitObject::Tree => println!("tree")
+            GitObject::Tree => println!("tree"),
         }
     }
 }
@@ -53,12 +53,12 @@ fn parse(content: &str) -> GitObject {
 }
 
 fn parse_blob(content: &str) -> GitObject {
-    let s = content.strip_prefix("blob ").unwrap();
+    let s = &content[5..];
     let blob = match s.find('\0') {
         Some(i) => {
             let size = s[0..i].parse::<usize>().unwrap();
-            &s[(i+1)..(i + 1 + size)]
-        },
+            &s[(i + 1)..(i + 1 + size)]
+        }
         None => "",
     };
     GitObject::Blob(blob.to_string())
