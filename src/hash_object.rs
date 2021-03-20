@@ -38,10 +38,7 @@ fn hash(content: &[u8]) -> String {
     let mut hasher = Sha1::new();
     hasher.update(content);
     let result = hasher.finalize();
-    result
-        .iter()
-        .map(|n| format!("{:02x}", n))
-        .collect::<String>()
+    hash_to_str(&result)
 }
 
 fn load_file(filename: &str) -> Vec<u8> {
