@@ -1,11 +1,8 @@
 #[allow(unused_imports)]
-use std::env;
-#[allow(unused_imports)]
-use std::fs;
+use std::{env,fs};
+use git_starter_rust::cat_file::*;
 
 fn main() {
-    println!("Your code goes here!");
-
     let args: Vec<String> = env::args().collect();
     execute_command(args)
 }
@@ -13,6 +10,7 @@ fn main() {
 fn execute_command(commands: Vec<String>) {
     match &*commands[1] {
         "init" => init(),
+        "cat-file" => cat_file(&commands),
         _ => println!("Initialized git directory"),
     }
 }
@@ -24,3 +22,4 @@ fn init() {
     fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
     println!("Initialized git directory")
 }
+
