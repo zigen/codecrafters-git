@@ -20,7 +20,7 @@ enum GitObject {
 impl GitObject {
     pub fn pretty_print(&self) {
         match self {
-            GitObject::Blob(s) => println!("{}", s),
+            GitObject::Blob(s) => print!("{}", s),
             GitObject::Tree => println!("tree"),
         }
     }
