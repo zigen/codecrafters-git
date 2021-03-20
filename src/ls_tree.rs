@@ -1,9 +1,4 @@
 use crate::git_object::*;
-use crate::utils::*;
-use flate2::read::ZlibDecoder;
-use std::fs;
-use std::io::Read;
-use std::path::Path;
 
 #[derive(Default)]
 struct LsTreeOption<'a> {
@@ -22,14 +17,12 @@ pub fn ls_tree(commands: &[String]) {
     match &result {
         GitObject::Blob(_) => {
             println!("not a tree object");
-            return;
         }
         GitObject::Tree(lst) => {
             if option.name_only {
                 for e in lst {
                     println!("{}", e.filename);
                 }
-                return;
             } else {
                 result.pretty_print();
             }
