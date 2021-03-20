@@ -57,7 +57,7 @@ fn parse_blob(content: &str) -> GitObject {
     let blob = match s.find('\0') {
         Some(i) => {
             let size = s[0..i].parse::<usize>().unwrap();
-            &s[(i + 1)..(i + size)]
+            &s[(i + 1)..]
         }
         None => "",
     };
