@@ -24,6 +24,18 @@ impl GitObject {
             GitObject::Tree => println!("tree"),
         }
     }
+    pub fn size(&self) -> usize {
+        match self {
+            GitObject::Blob(s) => s.len(),
+            GitObject::Tree => 40,
+        }
+    }
+    pub fn type_name(&self) -> String {
+        match self {
+            GitObject::Blob(_) => String::from("blob"),
+            GitObject::Tree => String::from("tree"),
+        }
+    }
 }
 
 pub fn cat_file(commands: &[String]) {
@@ -38,6 +50,15 @@ pub fn cat_file(commands: &[String]) {
     // println!("result: {:?}", result);
     if option.pretty_print {
         result.pretty_print();
+        return;
+    }
+    if option.show_size {
+        println!("{:?}", result.size());
+        return;
+    }
+    if option.show_type {
+        println!("{}", result.type_name());
+        return;
     }
 }
 
@@ -55,10 +76,7 @@ fn parse(content: &str) -> GitObject {
 fn parse_blob(content: &str) -> GitObject {
     let s = &content[5..];
     let blob = match s.find('\0') {
-        Some(i) => {
-            let size = s[0..i].parse::<usize>().unwrap();
-            &s[(i + 1)..]
-        }
+        Some(i) => &s[(i + 1)..],
         None => "",
     };
     GitObject::Blob(blob.to_string())
@@ -80,6 +98,8 @@ fn parse_options(commands: &[String]) -> CatFileOption {
     for token in &commands[2..] {
         match &token[..] {
             "-p" => option.pretty_print = true,
+            "-s" => option.show_size = true,
+            "-t" => option.show_type = true,
             _ if token.len() == 40 => option.obj_hash = Some(&token),
             _ => println!("ignore option {}", token),
         }
