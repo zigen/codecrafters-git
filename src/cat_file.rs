@@ -1,3 +1,5 @@
+use crate::git_object::*;
+use crate::utils::*;
 use flate2::read::ZlibDecoder;
 use std::fs;
 use std::io::Read;
@@ -9,33 +11,6 @@ struct CatFileOption<'a> {
     show_size: bool,
     show_type: bool,
     obj_hash: Option<&'a String>,
-}
-
-#[derive(Debug)]
-enum GitObject {
-    Blob(String),
-    Tree,
-}
-
-impl GitObject {
-    pub fn pretty_print(&self) {
-        match self {
-            GitObject::Blob(s) => print!("{}", s),
-            GitObject::Tree => println!("tree"),
-        }
-    }
-    pub fn size(&self) -> usize {
-        match self {
-            GitObject::Blob(s) => s.len(),
-            GitObject::Tree => 40,
-        }
-    }
-    pub fn type_name(&self) -> String {
-        match self {
-            GitObject::Blob(_) => String::from("blob"),
-            GitObject::Tree => String::from("tree"),
-        }
-    }
 }
 
 pub fn cat_file(commands: &[String]) {
@@ -79,11 +54,11 @@ fn parse_blob(content: &str) -> GitObject {
         Some(i) => &s[(i + 1)..],
         None => "",
     };
-    GitObject::Blob(blob.to_string())
+    GitObject::Blob(blob.as_bytes())
 }
 
 fn load_obj_file(hash: &str) -> String {
-    let path_str = format!(".git/objects/{}/{}", &hash[0..2], &hash[2..]);
+    let path_str = hash_to_path_str(&hash);
     let object_path = Path::new(&path_str);
     // println!("{}", object_path.to_str().unwrap());
     let file_content = fs::read(object_path).unwrap();

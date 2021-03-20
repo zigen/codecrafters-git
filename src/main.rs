@@ -1,4 +1,5 @@
 use git_starter_rust::cat_file::*;
+use git_starter_rust::hash_object::*;
 #[allow(unused_imports)]
 use std::{env, fs};
 
@@ -11,6 +12,7 @@ fn execute_command(commands: Vec<String>) {
     match &*commands[1] {
         "init" => init(),
         "cat-file" => cat_file(&commands),
+        "hash-object" => hash_object(&commands),
         _ => println!("Initialized git directory"),
     }
 }
