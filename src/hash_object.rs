@@ -17,7 +17,7 @@ pub fn hash_object(commands: &[String]) {
     }
 
     let content = load_file(&option.filename.as_ref().unwrap());
-    let blob = GitObject::Blob(&content);
+    let blob = GitObject::Blob(content);
     let blob_content = blob.to_string();
     let sha1hash = hash(blob_content.as_bytes());
     if option.write_object {
