@@ -1,6 +1,7 @@
 use git_starter_rust::cat_file::cat_file;
 use git_starter_rust::hash_object::hash_object;
 use git_starter_rust::ls_tree::ls_tree;
+use git_starter_rust::write_tree::write_tree;
 #[allow(unused_imports)]
 use std::{env, fs};
 
@@ -15,6 +16,7 @@ fn execute_command(commands: Vec<String>) {
         "cat-file" => cat_file(&commands),
         "hash-object" => hash_object(&commands),
         "ls-tree" => ls_tree(&commands),
+        "write-tree" => write_tree(&commands),
         _ => println!("Initialized git directory"),
     }
 }

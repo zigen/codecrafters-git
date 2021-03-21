@@ -8,11 +8,12 @@ struct LsTreeOption<'a> {
 
 pub fn ls_tree(commands: &[String]) {
     let option = parse_options(commands);
-    if option.obj_hash.is_none() {
-        return;
-    }
+    let hash = option.obj_hash.expect("no object hash given");
 
-    let result = load_object_by_hash(&option.obj_hash.as_ref().unwrap());
+    let result = match load_object_by_hash(hash) {
+        Ok(r) => r,
+        Err(e) => panic!("{:?}", e),
+    };
 
     match &result {
         GitObject::Blob(_) => {

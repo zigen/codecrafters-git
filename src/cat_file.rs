@@ -14,7 +14,10 @@ pub fn cat_file(commands: &[String]) {
         return;
     }
 
-    let result = load_object_by_hash(&option.obj_hash.as_ref().unwrap());
+    let result = match load_object_by_hash(&option.obj_hash.as_ref().unwrap()) {
+        Ok(r) => r,
+        Err(e) => panic!("{:?}", e),
+    };
     if option.pretty_print {
         result.pretty_print();
         return;
