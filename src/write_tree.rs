@@ -45,7 +45,7 @@ fn write_tree_rec(path: &Path) -> Vec<GitTreeNode> {
         })
         .collect()
 }
-
+#[allow(clippy::match_single_binding)]
 fn parse_options(commands: &[String]) -> WriteTreeOption {
     let option: WriteTreeOption = Default::default();
     for token in &commands[2..] {

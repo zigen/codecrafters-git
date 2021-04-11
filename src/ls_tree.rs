@@ -16,7 +16,7 @@ pub fn ls_tree(commands: &[String]) {
     };
 
     match &result {
-        GitObject::Blob(_) => {
+        GitObject::Commit(_) | GitObject::Blob(_) => {
             println!("not a tree object");
         }
         GitObject::Tree(lst) => {

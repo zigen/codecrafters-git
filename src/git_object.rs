@@ -1,11 +1,28 @@
+use crate::git_user::User;
 use crate::utils::*;
 use flate2::read::ZlibDecoder;
 use std::{fs, io, io::Read, io::Write, path::Path, result};
 
 #[derive(Debug)]
-pub enum GitObject {
+pub enum GitObject<'a> {
     Blob(Vec<u8>),
     Tree(Vec<GitTreeNode>),
+    Commit(GitCommitObject<'a>),
+}
+
+#[derive(Debug)]
+pub struct GitCommitObject<'a> {
+    pub tree: Vec<u8>,
+    pub parent: Option<Vec<u8>>,
+    pub author: &'a User,
+    pub committer: &'a User,
+    pub message: String,
+}
+
+impl<'a> GitCommitObject<'a> {
+    pub fn size(&self) -> usize {
+        0
+    }
 }
 
 #[derive(Debug)]
@@ -33,15 +50,38 @@ pub enum GitObjectError {
 
 type Result<T> = result::Result<T, GitObjectError>;
 
-impl GitObject {
+impl<'a> GitObject<'a> {
     pub fn new_tree(mut nodes: Vec<GitTreeNode>) -> Self {
         nodes.sort_by(|a, b| a.filename.cmp(&b.filename));
         GitObject::Tree(nodes)
     }
 
+    pub fn new_commit<'b>(
+        tree_sha: String,
+        parent: Option<&String>,
+        author: &'a User,
+        committer: &'a User,
+        message: String,
+    ) -> Self {
+        let parent_sha = if parent.is_some() {
+            Some(str_to_hash(parent.unwrap().to_string()))
+        } else {
+            None
+        };
+        let commit_obj = GitCommitObject {
+            tree: str_to_hash(tree_sha),
+            author: author,
+            committer: committer,
+            parent: parent_sha,
+            message: message,
+        };
+        GitObject::Commit(commit_obj)
+    }
+
     pub fn pretty_print(&self) {
         match self {
             GitObject::Blob(s) => print!("{}", String::from_utf8_lossy(s)),
+            GitObject::Commit(c) => print!("commit"),
             GitObject::Tree(lst) => {
                 for e in lst {
                     println!(
@@ -58,6 +98,7 @@ impl GitObject {
 
     pub fn get_content(&self) -> Vec<u8> {
         match self {
+            GitObject::Commit(c) => vec![],
             GitObject::Blob(s) => s.to_vec(),
             GitObject::Tree(t) => {
                 t.iter()
@@ -76,18 +117,21 @@ impl GitObject {
         match self {
             GitObject::Blob(s) => s.len(),
             GitObject::Tree(_) => 40,
+            GitObject::Commit(c) => c.size(),
         }
     }
     pub fn type_name(&self) -> String {
         match self {
             GitObject::Blob(_) => String::from("blob"),
             GitObject::Tree(_) => String::from("tree"),
+            GitObject::Commit(_) => String::from("commit"),
         }
     }
     pub fn to_node_type(&self) -> GitNodeType {
         match self {
             GitObject::Blob(_) => GitNodeType::Blob,
             GitObject::Tree(_) => GitNodeType::Tree,
+            GitObject::Commit(_) => GitNodeType::Blob,
         }
     }
 
@@ -167,8 +211,8 @@ impl GitTreeNode {
     }
 }
 
-fn parse(content: &[u8]) -> Result<GitObject> {
-    let content_str = String::from_utf8_lossy(content);
+fn parse<'a>(content: Vec<u8>) -> Result<GitObject<'a>> {
+    let content_str = String::from_utf8_lossy(&content);
     if content_str.starts_with("blob") {
         return parse_blob(content);
     }
@@ -179,7 +223,7 @@ fn parse(content: &[u8]) -> Result<GitObject> {
     panic!("unknown content: {:?}", content);
 }
 
-fn parse_blob(content: &[u8]) -> Result<GitObject> {
+fn parse_blob<'a>(content: Vec<u8>) -> Result<GitObject<'a>> {
     if content.len() < 6 {
         return Err(GitObjectError::ParseError(format!(
             "blob too short. {:?}",
@@ -198,7 +242,7 @@ fn parse_blob(content: &[u8]) -> Result<GitObject> {
     }
 }
 
-fn parse_tree(content: &[u8]) -> Result<GitObject> {
+fn parse_tree<'a>(content: Vec<u8>) -> Result<GitObject<'a>> {
     let s = &content[5..];
     let si = s.iter().position(|&e| e == 0).unwrap();
     let mut blob = &s[(si + 1)..];
@@ -222,7 +266,7 @@ fn parse_tree(content: &[u8]) -> Result<GitObject> {
             Err(e) => return Err(e),
         };
 
-        let content = match parse(&obj) {
+        let content = match parse(obj) {
             Ok(o) => o,
             Err(e) => return Err(e),
         };
@@ -262,7 +306,7 @@ fn load_obj_file(hash: &str) -> Result<Vec<u8>> {
 
 pub fn load_object_by_hash(hash: &str) -> Result<GitObject> {
     match load_obj_file(hash) {
-        Ok(obj) => parse(&obj),
+        Ok(obj) => parse(obj),
         Err(e) => Err(e),
     }
 }
@@ -293,14 +337,14 @@ mod test {
         t.pretty_print();
 
         let content = t.to_node_content();
-        // println!("{}", String::from_utf8_lossy(&content.to_vec()));
+        println!("{}", String::from_utf8_lossy(&content.to_vec()));
         assert_eq!(content.to_vec()[..5], b"tree "[..]);
-        assert_eq!(content.to_vec()[8..14], b"100644"[..]);
         assert_eq!(content.to_vec()[8..15], b"100644 "[..]);
         assert_eq!(content.to_vec()[15..23], b"hogehoge"[..]);
         assert_eq!(content.to_vec()[23], b'\0');
         assert_eq!(content.to_vec()[24..], hash[..]);
-        assert_eq!(content.len(), 40);
-        // assert_eq!(o.to_hash_str(), "e9bc11025c28829eedf6d30cd3b65628648cad5f");
+        // hash: 40 chars in hex notation, 20 bytes.
+        assert_eq!(content.len(), 44);
+        assert_eq!(t.to_hash_str(), "341d422eca9785ce3f93590d66bda0a47facb5d9");
     }
 }
