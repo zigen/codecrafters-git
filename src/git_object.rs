@@ -139,6 +139,7 @@ impl<'a> GitObject<'a> {
                 v.push(0x0a);
                 v.push(0x0a);
                 v.append(&mut c.message.as_bytes().to_vec());
+                v.push(0x0a);
                 v
             }
             GitObject::Blob(s) => s.to_vec(),
