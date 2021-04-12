@@ -11,7 +11,7 @@ struct CommitTreeOption<'a> {
 
 pub fn commit_tree(commands: &[String]) {
     let option = parse_options(commands);
-    println!("option: {:?}", option);
+    // println!("option: {:?}", option);
     let commit = GitObject::new_commit(
         option.tree_sha.unwrap().to_string(),
         option.parent_sha,
@@ -19,7 +19,9 @@ pub fn commit_tree(commands: &[String]) {
         &USER,
         option.message.unwrap().to_string(),
     );
-    println!("{}", commit.to_string());
+    // println!("{}", commit.to_string());
+    commit.write();
+    println!("{}", commit.to_hash_str());
     // let nodes = write_tree_rec(&path);
     // println!("nodes: {:?}", nodes);
     // let tree = GitObject::new_tree(nodes);

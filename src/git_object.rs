@@ -1,7 +1,14 @@
 use crate::git_user::User;
 use crate::utils::*;
 use flate2::read::ZlibDecoder;
-use std::{fs, io, io::Read, io::Write, path::Path, result};
+use std::{
+    fs, io,
+    io::Read,
+    io::Write,
+    path::Path,
+    result,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 #[derive(Debug)]
 pub enum GitObject<'a> {
@@ -98,7 +105,42 @@ impl<'a> GitObject<'a> {
 
     pub fn get_content(&self) -> Vec<u8> {
         match self {
-            GitObject::Commit(c) => vec![],
+            GitObject::Commit(c) => {
+                let mut v = vec![];
+                v.append(&mut "tree ".as_bytes().to_vec());
+                v.append(&mut hash_to_str(&c.tree).as_bytes().to_vec());
+                v.push(0x0a);
+                if c.parent.is_some() {
+                    v.append(&mut "parent ".as_bytes().to_vec());
+                    v.append(&mut hash_to_str(&c.parent.as_ref().unwrap()).as_bytes().to_vec());
+                    v.push(0x0a);
+                }
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                v.append(
+                    &mut format!(
+                        "author {} <{}> {:?} +0000",
+                        c.author.name, c.author.email, now
+                    )
+                    .as_bytes()
+                    .to_vec(),
+                );
+                v.push(0x0a);
+                v.append(
+                    &mut format!(
+                        "committer {} <{}> {:?} +0000",
+                        c.committer.name, c.committer.email, now
+                    )
+                    .as_bytes()
+                    .to_vec(),
+                );
+                v.push(0x0a);
+                v.push(0x0a);
+                v.append(&mut c.message.as_bytes().to_vec());
+                v
+            }
             GitObject::Blob(s) => s.to_vec(),
             GitObject::Tree(t) => {
                 t.iter()
@@ -314,6 +356,7 @@ pub fn load_object_by_hash(hash: &str) -> Result<GitObject> {
 #[cfg(test)]
 mod test {
     use crate::git_object::*;
+    use crate::git_user::USER;
 
     #[test]
     fn test_blob_hash() {
@@ -346,5 +389,24 @@ mod test {
         // hash: 40 chars in hex notation, 20 bytes.
         assert_eq!(content.len(), 44);
         assert_eq!(t.to_hash_str(), "341d422eca9785ce3f93590d66bda0a47facb5d9");
+    }
+
+    #[test]
+    fn test_commit_content() {
+        let c = GitObject::new_commit(
+            String::from("341d422eca9785ce3f93590d66bda0a47facb5d9"),
+            None,
+            &USER,
+            &USER,
+            String::from("hogehoge piyopiyo"),
+        );
+        let content = c.get_content();
+        println!("{}", String::from_utf8_lossy(&content.to_vec()));
+        assert_eq!(content.to_vec()[..5], b"tree "[..]);
+        // assert_eq!(content.to_vec()[8..15], b"100644 "[..]);
+        // assert_eq!(content.to_vec()[15..23], b"hogehoge"[..]);
+        // assert_eq!(content.to_vec()[23], b'\0');
+        // hash: 40 chars in hex notation, 20 bytes.
+        // assert_eq!(content.len(), 44);
     }
 }
