@@ -87,7 +87,7 @@ impl<'a> GitObject<'a> {
 
     pub fn pretty_print(&self) {
         match self {
-            GitObject::Blob(s) => print!("{}", String::from_utf8_lossy(s)),
+            GitObject::Blob(s) => println!("{}", String::from_utf8_lossy(s)),
             GitObject::Commit(c) => print!("commit"),
             GitObject::Tree(lst) => {
                 for e in lst {
@@ -260,6 +260,9 @@ fn parse<'a>(content: Vec<u8>) -> Result<GitObject<'a>> {
     }
     if content_str.starts_with("tree") {
         return parse_tree(content);
+    }
+    if content_str.starts_with("commit") {
+        panic!("to be implemented");
     }
 
     panic!("unknown content: {:?}", content);
