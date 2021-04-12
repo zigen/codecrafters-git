@@ -87,8 +87,8 @@ impl<'a> GitObject<'a> {
 
     pub fn pretty_print(&self) {
         match self {
-            GitObject::Blob(s) => println!("{}", String::from_utf8_lossy(s)),
-            GitObject::Commit(c) => print!("commit"),
+            GitObject::Blob(s) => print!("{}", String::from_utf8_lossy(s)),
+            GitObject::Commit(_) => print!("commit"),
             GitObject::Tree(lst) => {
                 for e in lst {
                     println!(

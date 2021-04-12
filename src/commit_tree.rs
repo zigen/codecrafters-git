@@ -1,6 +1,5 @@
 use crate::git_object::*;
 use crate::git_user::USER;
-use std::{fs, path::Path};
 
 #[derive(Default, Debug)]
 struct CommitTreeOption<'a> {
@@ -20,46 +19,9 @@ pub fn commit_tree(commands: &[String]) {
         option.message.unwrap().to_string(),
     );
     // println!("{}", commit.to_string());
-    commit.write();
+    commit.write().unwrap();
     println!("{}", commit.to_hash_str());
-    // let nodes = write_tree_rec(&path);
-    // println!("nodes: {:?}", nodes);
-    // let tree = GitObject::new_tree(nodes);
-    // tree.write().unwrap();
-    // println!("{}", tree.to_hash_str());
 }
-
-// fn write_tree_rec(path: &Path) -> Vec<GitTreeNode> {
-//     path.read_dir()
-//         .expect("read_dir call failed")
-//         .filter_map(|entry| match entry {
-//             Ok(entry) if !entry.path().starts_with("./.git") => {
-//                 // println!("{:?}", entry.path());
-//                 if entry.file_type().unwrap().is_dir() {
-//                     let tree = GitObject::Tree(write_tree_rec(&entry.path()));
-//                     Some(GitTreeNode::new(
-//                         entry.file_name().into_string().unwrap(),
-//                         &tree.to_hash(),
-//                         100644,
-//                         GitNodeType::Tree,
-//                     ))
-//                 } else {
-//                     // println!("read blob: {}", entry.path().display());
-//                     let content = fs::read(entry.path()).unwrap();
-//                     let blob = GitObject::Blob(content);
-//                     blob.write().unwrap();
-//                     Some(GitTreeNode::new(
-//                         entry.file_name().into_string().unwrap(),
-//                         &blob.to_hash(),
-//                         100644,
-//                         GitNodeType::Blob,
-//                     ))
-//                 }
-//             }
-//             _ => None,
-//         })
-//         .collect()
-// }
 
 fn parse_options(commands: &[String]) -> CommitTreeOption {
     let mut option: CommitTreeOption = Default::default();
